@@ -7,7 +7,7 @@ fn main() {
         .arg("--abbrev-ref")
         .arg("HEAD")
         .output()
-        .expect("failed to execute process");
+        .expect("failed to get the current branch name");
 
     let branch = std::str::from_utf8(&output.stdout).unwrap().trim();
     println!("{}", branch);
@@ -19,10 +19,10 @@ fn main() {
         .arg("--pretty=%H")
         .arg(branch)
         .output()
-        .expect("failed to execute process");
+        .expect("failed to execute git log");
 
     let commits = std::str::from_utf8(&output.stdout)
-        .expect("Failed to convert output to strings")
+        .expect("failed to convert commits output to strings")
         .trim()
         .split("\n")
         .map(|s| s.to_string())
