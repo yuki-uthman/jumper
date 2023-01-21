@@ -1,9 +1,12 @@
 use std::process::Command;
 
 fn main() {
-    // run git command
+    // git log --reverse --pretty=%H master
     let output = Command::new("git")
-        .arg("status")
+        .arg("log")
+        .arg("--reverse")
+        .arg("--pretty=%H")
+        .arg("master")
         .output()
         .expect("failed to execute process");
 
