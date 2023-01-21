@@ -21,8 +21,13 @@ fn main() {
         .output()
         .expect("failed to execute process");
 
-    let commits = std::str::from_utf8(&output.stdout).unwrap().trim();
+    let commits = std::str::from_utf8(&output.stdout)
+        .expect("Failed to convert output to strings")
+        .trim()
+        .split("\n")
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
 
     // print output
-    println!("{}", commits);
+    println!("{:?}", commits);
 }
