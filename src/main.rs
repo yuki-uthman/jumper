@@ -58,7 +58,6 @@ fn get_head() -> String {
 }
 
 fn main() {
-
     // get current commit
     let head = get_head();
     println!("HEAD => {}", head);
@@ -75,6 +74,25 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
         println!("No file given");
+        // get index of the head commit in the log
+        let index = log.iter().position(|r| r == &head).unwrap();
+
+        // check if it is the last commit
+        if index == log.len() - 1 {
+            println!("HEAD is the last commit");
+        } else {
+            println!("HEAD is not the last commit");
+            // get the next commit
+            let next_commit = &log[index + 1];
+            // check out the next commit
+            let output = Command::new("git")
+                .arg("checkout")
+                .arg(next_commit)
+                .output()
+                .expect("failed to checkout the next commit");
+            let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
+            println!("{}", stderr);
+        }
     } else {
         let file = &args[1];
         println!("File: {}", file);
@@ -83,5 +101,4 @@ fn main() {
         let log = changes_for_file(file);
         println!("{:#?}", log);
     }
-
 }
