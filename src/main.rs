@@ -1,6 +1,6 @@
 use std::process::Command;
 
-fn get_log() -> Vec<String> {
+fn get_master_log() -> Vec<String> {
     let output = Command::new("git")
         .arg("log")
         .arg("--reverse")
@@ -49,7 +49,7 @@ fn get_head() -> String {
 }
 
 fn jump_to_next_commit() {
-    let log = get_log();
+    let log = get_master_log();
     let head = get_head();
     let index = log.iter().position(|r| r == &head).unwrap();
     let next_commit = &log[index + 1];
@@ -64,7 +64,7 @@ fn jump_to_next_commit() {
 }
 
 fn is_head_at_last_commit() -> bool {
-    let log = get_log();
+    let log = get_master_log();
     let head = get_head();
     let index = log.iter().position(|r| r == &head).unwrap();
     index == log.len() - 1
