@@ -1,15 +1,5 @@
 use std::process::Command;
 
-fn get_branch() -> String {
-    let output = Command::new("git")
-        .arg("rev-parse")
-        .arg("--abbrev-ref")
-        .arg("HEAD")
-        .output()
-        .expect("failed to get the current branch name");
-    String::from_utf8(output.stdout).unwrap().trim().to_string()
-}
-
 fn get_log() -> Vec<String> {
     let output = Command::new("git")
         .arg("log")
