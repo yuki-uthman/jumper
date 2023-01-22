@@ -28,6 +28,26 @@ fn get_log() -> Vec<String> {
     log
 }
 
+fn changes_for_file(file: &str) -> Vec<String> {
+    let output = Command::new("git")
+        .arg("log")
+        .arg("--reverse")
+        .arg("--pretty=format:%H")
+        .arg("--")
+        .arg(file)
+        .output()
+        .expect("failed to get the current branch name");
+
+    let log = std::str::from_utf8(&output.stdout)
+        .expect("failed to convert commits output to strings")
+        .trim()
+        .split("\n")
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
+
+    log
+}
+
 fn main() {
     // git branch name
     let branch = get_branch();
@@ -39,25 +59,8 @@ fn main() {
 
     // accept command line argument
     let path = std::env::args().nth(1).expect("failed to get path");
-
-    let output = Command::new("git")
-        .arg("log")
-        .arg("--pretty=%H")
-        .arg("--reverse")
-        .arg("--follow")
-        .arg("--")
-        .arg(path)
-        .output()
-        .expect("failed to execute git log");
-
-    let changes = std::str::from_utf8(&output.stdout)
-        .expect("failed to convert commits output to strings")
-        .trim()
-        .split("\n")
-        .map(|s| s.to_string())
-        .collect::<Vec<String>>();
-
-    println!("{:?}", changes);
+    let changes = changes_for_file(&path);
+    println!("{:#?}", changes);
 
     // get current commit
     let output = Command::new("git")
