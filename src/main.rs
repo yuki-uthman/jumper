@@ -100,13 +100,18 @@ fn main() {
 
         // find the next commit that changed the file
         let next_commit = master_log.iter().skip(index + 1).find(|master_commit| {
-            let found = change_log.iter().find(|change_commit| {
-                println!("{} == {}", master_commit, change_commit);
-                change_commit == master_commit
-            });
-            match found {
-                Some(_) => true,
-                None => false,
+            // skip if the commit is not in the change log
+            if !change_log.contains(master_commit) {
+                false
+            } else {
+                let found = change_log.iter().find(|change_commit| {
+                    println!("{} == {}", master_commit, change_commit);
+                    change_commit == master_commit
+                });
+                match found {
+                    Some(_) => true,
+                    None => false,
+                }
             }
         });
 
