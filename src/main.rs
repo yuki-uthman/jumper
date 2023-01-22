@@ -73,24 +73,20 @@ fn jump_to_next_commit() {
     println!("{}", stderr);
 }
 
-fn main() {
-    // get current commit
-    let head = get_head();
-    println!("HEAD => {}", head);
-
-    // git log
+fn is_head_at_last_commit() -> bool {
     let log = get_log();
-    println!("{:#?}", log);
+    let head = get_head();
+    let index = log.iter().position(|r| r == &head).unwrap();
+    index == log.len() - 1
+}
 
+fn main() {
     // check if argument is given
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
         println!("No file given");
-        // get index of the head commit in the log
-        let index = log.iter().position(|r| r == &head).unwrap();
 
-        // check if it is the last commit
-        if index == log.len() - 1 {
+        if is_head_at_last_commit() {
             println!("HEAD is the last commit");
         } else {
             jump_to_next_commit();
