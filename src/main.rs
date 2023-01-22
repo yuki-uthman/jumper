@@ -1,15 +1,18 @@
 use std::process::Command;
 
-fn main() {
-    // git branch name
+fn get_branch() -> String {
     let output = Command::new("git")
         .arg("rev-parse")
         .arg("--abbrev-ref")
         .arg("HEAD")
         .output()
         .expect("failed to get the current branch name");
+    String::from_utf8(output.stdout).unwrap().trim().to_string()
+}
 
-    let branch = std::str::from_utf8(&output.stdout).unwrap().trim();
+fn main() {
+    // git branch name
+    let branch = get_branch();
     println!("{}", branch);
 
     // git log --reverse --pretty=%H master
