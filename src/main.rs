@@ -10,29 +10,32 @@ fn get_branch() -> String {
     String::from_utf8(output.stdout).unwrap().trim().to_string()
 }
 
-fn main() {
-    // git branch name
-    let branch = get_branch();
-    println!("{}", branch);
-
-    // git log --reverse --pretty=%H master
+fn get_log() -> Vec<String> {
     let output = Command::new("git")
         .arg("log")
         .arg("--reverse")
-        .arg("--pretty=%H")
-        .arg(branch)
+        .arg("--pretty=format:%H")
         .output()
-        .expect("failed to execute git log");
+        .expect("failed to get the current branch name");
 
-    let commits = std::str::from_utf8(&output.stdout)
+    let log = std::str::from_utf8(&output.stdout)
         .expect("failed to convert commits output to strings")
         .trim()
         .split("\n")
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
 
-    // print output
-    println!("{:?}", commits);
+    log
+}
+
+fn main() {
+    // git branch name
+    let branch = get_branch();
+    println!("{}", branch);
+
+    // git log
+    let log = get_log();
+    println!("{:#?}", log);
 
     // accept command line argument
     let path = std::env::args().nth(1).expect("failed to get path");
