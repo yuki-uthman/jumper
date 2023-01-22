@@ -58,6 +58,11 @@ fn get_head() -> String {
 }
 
 fn main() {
+
+    // get current commit
+    let head = get_head();
+    println!("HEAD => {}", head);
+
     // git branch name
     let branch = get_branch();
     println!("{}", branch);
@@ -66,12 +71,17 @@ fn main() {
     let log = get_log();
     println!("{:#?}", log);
 
-    // accept command line argument
-    let path = std::env::args().nth(1).expect("failed to get path");
-    let changes = changes_for_file(&path);
-    println!("{:#?}", changes);
+    // check if argument is given
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() < 2 {
+        println!("No file given");
+    } else {
+        let file = &args[1];
+        println!("File: {}", file);
 
-    // get current commit
-    let head = get_head();
-    println!("HEAD => {}", head);
+        // git log for file
+        let log = changes_for_file(file);
+        println!("{:#?}", log);
+    }
+
 }
