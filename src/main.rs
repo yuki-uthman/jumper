@@ -58,6 +58,21 @@ fn get_head() -> String {
     String::from_utf8(output.stdout).unwrap().trim().to_string()
 }
 
+fn jump_to_next_commit() {
+    let log = get_log();
+    let head = get_head();
+    let index = log.iter().position(|r| r == &head).unwrap();
+    let next_commit = &log[index + 1];
+    let output = Command::new("git")
+        .arg("checkout")
+        .arg(next_commit)
+        .output()
+        .expect("failed to get checkout the next commit");
+
+    let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
+    println!("{}", stderr);
+}
+
 fn main() {
     // get current commit
     let head = get_head();
@@ -78,17 +93,7 @@ fn main() {
         if index == log.len() - 1 {
             println!("HEAD is the last commit");
         } else {
-            println!("HEAD is not the last commit");
-            // get the next commit
-            let next_commit = &log[index + 1];
-            // check out the next commit
-            let output = Command::new("git")
-                .arg("checkout")
-                .arg(next_commit)
-                .output()
-                .expect("failed to checkout the next commit");
-            let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
-            println!("{}", stderr);
+            jump_to_next_commit();
         }
     } else {
         let file = &args[1];
