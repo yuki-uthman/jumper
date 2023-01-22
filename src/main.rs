@@ -53,4 +53,13 @@ fn main() {
 
     println!("{:?}", changes);
 
+    // get current commit
+    let output = Command::new("git")
+        .arg("rev-parse")
+        .arg("HEAD")
+        .output()
+        .expect("failed to get the current commit");
+
+    let head = std::str::from_utf8(&output.stdout).unwrap().trim();
+    println!("HEAD => {}", head);
 }
