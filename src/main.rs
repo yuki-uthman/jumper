@@ -15,6 +15,7 @@ fn get_log() -> Vec<String> {
         .arg("log")
         .arg("--reverse")
         .arg("--pretty=format:%H")
+        .arg("master")
         .output()
         .expect("failed to get the current branch name");
 
@@ -61,10 +62,6 @@ fn main() {
     // get current commit
     let head = get_head();
     println!("HEAD => {}", head);
-
-    // git branch name
-    let branch = get_branch();
-    println!("{}", branch);
 
     // git log
     let log = get_log();
