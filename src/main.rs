@@ -75,14 +75,14 @@ fn is_head_at_last_commit() -> bool {
 fn jump_to_next_change(file: &str) {
     // index of the current commit
     let master_log = get_master_log();
-    println!("Master log: \n{:#?}", master_log);
+    // println!("Master log: \n{:#?}", master_log);
 
     let head = get_head();
     let index = master_log.iter().position(|r| r == &head).unwrap();
 
     // git log for file
     let change_log = changes_for_file(file);
-    println!("Change log: \n{:#?}", change_log);
+    // println!("Change log: \n{:#?}", change_log);
 
     // find the next commit that changed the file
     let next_commit = master_log.iter().skip(index + 1).find(|master_commit| {
@@ -91,7 +91,7 @@ fn jump_to_next_change(file: &str) {
             false
         } else {
             let found = change_log.iter().find(|change_commit| {
-                println!("{} == {}", master_commit, change_commit);
+                // println!("{} == {}", master_commit, change_commit);
                 change_commit == master_commit
             });
             match found {
@@ -101,14 +101,32 @@ fn jump_to_next_change(file: &str) {
         }
     });
 
-    println!("{:#?}", next_commit);
+    // println!("{:#?}", next_commit);
+
+    // checkout next commit
+    match next_commit {
+        Some(commit) => {
+            let output = Command::new("git")
+                .arg("checkout")
+                .arg(commit)
+                .output()
+                .expect("failed to get checkout the next commit");
+
+            let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
+            println!("{}", stderr);
+        }
+        None => {
+            println!("No more changes for {}", file);
+        }
+    }
+
 }
 
 fn main() {
     // check if argument is given
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
-        println!("No file given");
+        // println!("No file given");
 
         if is_head_at_last_commit() {
             println!("HEAD is the last commit");
@@ -117,7 +135,7 @@ fn main() {
         }
     } else {
         let file = &args[1];
-        println!("File: {}", file);
+        // println!("File: {}", file);
 
         jump_to_next_change(file);
     }
