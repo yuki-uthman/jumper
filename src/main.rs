@@ -30,4 +30,27 @@ fn main() {
 
     // print output
     println!("{:?}", commits);
+
+    // accept command line argument
+    let path = std::env::args().nth(1).expect("failed to get path");
+
+    let output = Command::new("git")
+        .arg("log")
+        .arg("--pretty=%H")
+        .arg("--reverse")
+        .arg("--follow")
+        .arg("--")
+        .arg(path)
+        .output()
+        .expect("failed to execute git log");
+
+    let changes = std::str::from_utf8(&output.stdout)
+        .expect("failed to convert commits output to strings")
+        .trim()
+        .split("\n")
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
+
+    println!("{:?}", changes);
+
 }
