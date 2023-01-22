@@ -72,6 +72,38 @@ fn is_head_at_last_commit() -> bool {
     index == log.len() - 1
 }
 
+fn jump_to_next_change(file: &str) {
+    // index of the current commit
+    let master_log = get_master_log();
+    println!("Master log: \n{:#?}", master_log);
+
+    let head = get_head();
+    let index = master_log.iter().position(|r| r == &head).unwrap();
+
+    // git log for file
+    let change_log = changes_for_file(file);
+    println!("Change log: \n{:#?}", change_log);
+
+    // find the next commit that changed the file
+    let next_commit = master_log.iter().skip(index + 1).find(|master_commit| {
+        // skip if the commit is not in the change log
+        if !change_log.contains(master_commit) {
+            false
+        } else {
+            let found = change_log.iter().find(|change_commit| {
+                println!("{} == {}", master_commit, change_commit);
+                change_commit == master_commit
+            });
+            match found {
+                Some(_) => true,
+                None => false,
+            }
+        }
+    });
+
+    println!("{:#?}", next_commit);
+}
+
 fn main() {
     // check if argument is given
     let args: Vec<String> = std::env::args().collect();
@@ -87,34 +119,6 @@ fn main() {
         let file = &args[1];
         println!("File: {}", file);
 
-        // index of the current commit
-        let master_log = get_master_log();
-        println!("Master log: \n{:#?}", master_log);
-
-        let head = get_head();
-        let index = master_log.iter().position(|r| r == &head).unwrap();
-
-        // git log for file
-        let change_log = changes_for_file(file);
-        println!("Change log: \n{:#?}", change_log);
-
-        // find the next commit that changed the file
-        let next_commit = master_log.iter().skip(index + 1).find(|master_commit| {
-            // skip if the commit is not in the change log
-            if !change_log.contains(master_commit) {
-                false
-            } else {
-                let found = change_log.iter().find(|change_commit| {
-                    println!("{} == {}", master_commit, change_commit);
-                    change_commit == master_commit
-                });
-                match found {
-                    Some(_) => true,
-                    None => false,
-                }
-            }
-        });
-
-        println!("{:#?}", next_commit);
+        jump_to_next_change(file);
     }
 }
