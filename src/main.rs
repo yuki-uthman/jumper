@@ -1,3 +1,4 @@
+use clap::Parser;
 use std::process::Command;
 
 fn get_master_log() -> Vec<String> {
@@ -121,21 +122,26 @@ fn jump_to_next_change(file: &str) {
     }
 }
 
+#[derive(Parser)]
+struct Cli {
+    path: Option<String>,
+}
+
 fn main() {
-    // check if argument is given
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() < 2 {
-        // println!("No file given");
 
-        if is_head_at_last_commit() {
-            println!("HEAD is the last commit");
-        } else {
-            jump_to_next_commit();
+    let cli = Cli::parse();
+
+    match cli.path.as_deref() {
+        Some(path) => {
+            jump_to_next_change(path);
         }
-    } else {
-        let file = &args[1];
-        // println!("File: {}", file);
-
-        jump_to_next_change(file);
+        None => {
+            if is_head_at_last_commit() {
+                println!("Already at the last commit");
+            } else {
+                jump_to_next_commit();
+            }
+        }
     }
+
 }
