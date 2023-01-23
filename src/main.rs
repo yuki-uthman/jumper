@@ -99,6 +99,50 @@ fn is_last_commit(log: &Vec<String>, head: &String) -> bool {
     index == log.len() - 1
 }
 
+fn jump_to_prev_change(file: &str) {
+    let mut master_log = get_master_log();
+    master_log.reverse();
+
+    let head = get_head();
+    let index = master_log.iter().position(|r| r == &head).unwrap();
+
+    let change_log = get_change_log(file);
+    // println!("Change log: \n{:#?}", change_log);
+
+    // find the next commit that changed the file
+    let prev_commit = master_log.iter().skip(index + 1).find(|master_commit| {
+        if !change_log.contains(master_commit) {
+            false
+        } else {
+            let found = change_log.iter().find(|change_commit| {
+                // println!("{} == {}", master_commit, change_commit);
+                change_commit == master_commit
+            });
+            match found {
+                Some(_) => true,
+                None => false,
+            }
+        }
+    });
+
+    match prev_commit {
+        Some(commit) => {
+            let output = Command::new("git")
+                .arg("checkout")
+                .arg(commit)
+                .output()
+                .expect("failed to get checkout the next commit");
+
+            let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
+            println!("{}", stderr);
+        }
+        None => {
+            println!("No more changes for {}", file);
+        }
+    }
+}
+
+
 fn jump_to_next_change(file: &str) {
     // index of the current commit
     let master_log = get_master_log();
@@ -175,8 +219,8 @@ fn main() {
             }
         },
         Commands::Prev { path } => match path {
-            Some(_path) => {
-                todo!();
+            Some(path) => {
+                jump_to_prev_change(path);
             }
             None => {
                 jump_to_previous_commit();
