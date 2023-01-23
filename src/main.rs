@@ -54,6 +54,12 @@ fn get_head() -> String {
 fn jump_to_next_commit() {
     let log = get_master_log();
     let head = get_head();
+
+    if is_head_at_last_commit(&log, &head) {
+        println!("Already at the last commit");
+        return;
+    }
+
     let index = log.iter().position(|r| r == &head).unwrap();
     let next_commit = &log[index + 1];
     let output = Command::new("git")
@@ -66,10 +72,8 @@ fn jump_to_next_commit() {
     println!("{}", stderr);
 }
 
-fn is_head_at_last_commit() -> bool {
-    let log = get_master_log();
-    let head = get_head();
-    let index = log.iter().position(|r| r == &head).unwrap();
+fn is_head_at_last_commit(log: &Vec<String>, head: &String) -> bool {
+    let index = log.iter().position(|r| r == head).unwrap();
     index == log.len() - 1
 }
 
@@ -140,23 +144,16 @@ fn main() {
     let cli = Cli::parse();
 
     match &cli.command {
-        Commands::Next { path } => {
-            match path {
-                Some(path) => {
-                    jump_to_next_change(path);
-                }
-                None => {
-                    if is_head_at_last_commit() {
-                        println!("Already at the last commit");
-                    } else {
-                        jump_to_next_commit();
-                    }
-                }
+        Commands::Next { path } => match path {
+            Some(path) => {
+                jump_to_next_change(path);
             }
-        }
+            None => {
+                jump_to_next_commit();
+            }
+        },
         Commands::Prev { path } => {
             println!("Prev for {:?}", path);
         }
     }
-
 }
