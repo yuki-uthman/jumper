@@ -19,7 +19,7 @@ fn get_master_log() -> Vec<String> {
     log
 }
 
-fn changes_for_file(file: &str) -> Vec<String> {
+fn get_change_log(file: &str) -> Vec<String> {
     let output = Command::new("git")
         .arg("log")
         .arg("master")
@@ -81,7 +81,7 @@ fn jump_to_next_change(file: &str) {
     let index = master_log.iter().position(|r| r == &head).unwrap();
 
     // git log for file
-    let change_log = changes_for_file(file);
+    let change_log = get_change_log(file);
     // println!("Change log: \n{:#?}", change_log);
 
     // find the next commit that changed the file
@@ -119,7 +119,6 @@ fn jump_to_next_change(file: &str) {
             println!("No more changes for {}", file);
         }
     }
-
 }
 
 fn main() {
