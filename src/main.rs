@@ -55,7 +55,7 @@ fn jump_to_next_commit() {
     let log = get_master_log();
     let head = get_head();
 
-    if is_head_at_last_commit(&log, &head) {
+    if is_last_commit(&log, &head) {
         println!("Already at the last commit");
         return;
     }
@@ -72,7 +72,7 @@ fn jump_to_next_commit() {
     println!("{}", stderr);
 }
 
-fn is_head_at_last_commit(log: &Vec<String>, head: &String) -> bool {
+fn is_last_commit(log: &Vec<String>, head: &String) -> bool {
     let index = log.iter().position(|r| r == head).unwrap();
     index == log.len() - 1
 }
