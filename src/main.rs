@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use std::process::Command;
 
 fn get_master_log() -> Vec<String> {
@@ -125,22 +125,37 @@ fn jump_to_next_change(file: &str) {
 #[derive(Parser)]
 struct Cli {
     path: Option<String>,
+
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    Next { path: Option<String> },
+    Prev { path: Option<String> },
 }
 
 fn main() {
-
     let cli = Cli::parse();
 
-    match cli.path.as_deref() {
-        Some(path) => {
-            jump_to_next_change(path);
-        }
-        None => {
-            if is_head_at_last_commit() {
-                println!("Already at the last commit");
-            } else {
-                jump_to_next_commit();
+    match &cli.command {
+        Commands::Next { path } => {
+            match path {
+                Some(path) => {
+                    jump_to_next_change(path);
+                }
+                None => {
+                    if is_head_at_last_commit() {
+                        println!("Already at the last commit");
+                    } else {
+                        jump_to_next_commit();
+                    }
+                }
             }
+        }
+        Commands::Prev { path } => {
+            println!("Prev for {:?}", path);
         }
     }
 
