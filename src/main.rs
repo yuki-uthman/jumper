@@ -51,6 +51,28 @@ fn get_head() -> String {
     String::from_utf8(output.stdout).unwrap().trim().to_string()
 }
 
+fn jump_to_previous_commit() {
+    let log = get_master_log();
+    let head = get_head();
+
+    let index = log.iter().position(|r| r == &head).unwrap();
+
+    if index == 0 {
+        println!("Already at the first commit");
+        return;
+    }
+
+    let prev_commit = &log[index - 1];
+    let output = Command::new("git")
+        .arg("checkout")
+        .arg(prev_commit)
+        .output()
+        .expect("failed to get checkout the next commit");
+
+    let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
+    println!("{}", stderr);
+}
+
 fn jump_to_next_commit() {
     let log = get_master_log();
     let head = get_head();
@@ -152,8 +174,13 @@ fn main() {
                 jump_to_next_commit();
             }
         },
-        Commands::Prev { path } => {
-            println!("Prev for {:?}", path);
-        }
+        Commands::Prev { path } => match path {
+            Some(_path) => {
+                todo!();
+            }
+            None => {
+                jump_to_previous_commit();
+            }
+        },
     }
 }
