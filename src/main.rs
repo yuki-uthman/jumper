@@ -2,8 +2,10 @@ use clap::{Parser, Subcommand};
 use std::process::Command;
 
 mod error;
+mod git;
 
 use error::Error;
+use git::{Direction, Git};
 
 fn get_log(branch: &str) -> Result<Vec<String>, Error> {
     let output = Command::new("git")
@@ -63,150 +65,7 @@ fn get_head() -> String {
     String::from_utf8(output.stdout).unwrap().trim().to_string()
 }
 
-fn jump_to_previous_commit(branch: &str) {
-    let log = get_log(branch).unwrap();
-    let head = get_head();
-
-    let index = log.iter().position(|r| r == &head).unwrap();
-
-    if index == 0 {
-        println!("Already at the first commit");
-        return;
-    }
-
-    let prev_commit = &log[index - 1];
-    let output = Command::new("git")
-        .arg("checkout")
-        .arg(prev_commit)
-        .output()
-        .expect("failed to get checkout the next commit");
-
-    let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
-    println!("{}", stderr);
-}
-
-fn jump_to_next_commit(branch: &str) -> Result<(), Error> {
-    let log = get_log(branch)?;
-    let head = get_head();
-
-    if is_last_commit(&log, &head) {
-        println!("Already at the last commit");
-        return Ok(());
-    }
-
-    let index = log.iter().position(|r| r == &head).unwrap();
-    let next_commit = &log[index + 1];
-    let output = Command::new("git")
-        .arg("checkout")
-        .arg(next_commit)
-        .output()
-        .expect("failed to get checkout the next commit");
-
-    let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
-    println!("{}", stderr);
-    Ok(())
-}
-
-fn is_last_commit(log: &Vec<String>, head: &String) -> bool {
-    let index = log.iter().position(|r| r == head).unwrap();
-    index == log.len() - 1
-}
-
-fn jump_to_prev_change(branch: &str, file: &str) {
-    let mut master_log = get_log(branch).unwrap();
-    master_log.reverse();
-
-    let head = get_head();
-    let index = master_log.iter().position(|r| r == &head).unwrap();
-
-    let change_log = get_change_log(branch, file);
-    // println!("Change log: \n{:#?}", change_log);
-
-    // find the next commit that changed the file
-    let prev_commit = master_log.iter().skip(index + 1).find(|master_commit| {
-        if !change_log.contains(master_commit) {
-            false
-        } else {
-            let found = change_log.iter().find(|change_commit| {
-                // println!("{} == {}", master_commit, change_commit);
-                change_commit == master_commit
-            });
-            match found {
-                Some(_) => true,
-                None => false,
-            }
-        }
-    });
-
-    match prev_commit {
-        Some(commit) => {
-            let output = Command::new("git")
-                .arg("checkout")
-                .arg(commit)
-                .output()
-                .expect("failed to get checkout the next commit");
-
-            let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
-            println!("{}", stderr);
-        }
-        None => {
-            println!("No more changes for {}", file);
-        }
-    }
-}
-
-
-fn jump_to_next_change(branch: &str, file: &str) -> Result<(), Error> {
-    let master_log = get_log(branch)?;
-
-    let head = get_head();
-    let index = master_log.iter().position(|r| r == &head).unwrap();
-
-    let change_log = get_change_log(branch, file);
-
-    // find the next commit that changed the file
-    let next_commit = master_log.iter().skip(index + 1).find(|master_commit| {
-        // skip if the commit is not in the change log
-        if !change_log.contains(master_commit) {
-            false
-        } else {
-            let found = change_log.iter().find(|change_commit| {
-                change_commit == master_commit
-            });
-            match found {
-                Some(_) => true,
-                None => false,
-            }
-        }
-    });
-
-    // checkout next commit
-    match next_commit {
-        Some(commit) => {
-            let output = Command::new("git")
-                .arg("checkout")
-                .arg(commit)
-                .output()
-                .expect("failed to checkout the next commit");
-
-            let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
-            println!("{}", stderr);
-            Ok(())
-        }
-        None => {
-            Err(Error::NoMoreChanges(file.to_string()))
-        }
-    }
-}
-
-#[derive(PartialEq)]
-enum Direction {
-    Forward,
-    Backward,
-}
-
 fn jump_to_change(direction: Direction, branch: &str, file: &str) -> Result<(), Error> {
-
     let mut master_log = get_log(branch)?;
     if direction == Direction::Backward {
         master_log.reverse();
@@ -222,9 +81,9 @@ fn jump_to_change(direction: Direction, branch: &str, file: &str) -> Result<(), 
         if !change_log.contains(master_commit) {
             false
         } else {
-            let found = change_log.iter().find(|change_commit| {
-                change_commit == master_commit
-            });
+            let found = change_log
+                .iter()
+                .find(|change_commit| change_commit == master_commit);
             match found {
                 Some(_) => true,
                 None => false,
@@ -245,9 +104,7 @@ fn jump_to_change(direction: Direction, branch: &str, file: &str) -> Result<(), 
             println!("{}", stderr);
             Ok(())
         }
-        None => {
-            Err(Error::NoMoreChanges(file.to_string()))
-        }
+        None => Err(Error::NoMoreChanges(file.to_string())),
     }
 }
 
@@ -274,37 +131,36 @@ fn main() {
 
     let branch = cli.branch.unwrap();
 
+    let git = Git::new(branch.clone());
+
     match &cli.command {
         Commands::Next { path } => match path {
-            Some(path) => {
-                match jump_to_change(Direction::Forward, &branch, path) {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("{}", e);
-                    }
+            Some(path) => match jump_to_change(Direction::Forward, &branch, path) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("{}", e);
                 }
-            }
-            None => {
-                match jump_to_next_commit(&branch) {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("{}", e);
-                    }
+            },
+            None => match git.jump_to_commit(Direction::Forward) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("{}", e);
                 }
-            }
+            },
         },
         Commands::Prev { path } => match path {
-            Some(path) => {
-                match jump_to_change(Direction::Backward, &branch, path) {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("{}", e);
-                    }
+            Some(path) => match jump_to_change(Direction::Backward, &branch, path) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("{}", e);
                 }
-            }
-            None => {
-                jump_to_previous_commit(&branch);
-            }
+            },
+            None => match git.jump_to_commit(Direction::Backward) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("{}", e);
+                }
+            },
         },
     }
 }

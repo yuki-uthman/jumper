@@ -7,4 +7,10 @@ pub enum Error {
 
     #[error("no more changes found for the file: {0}")]
     NoMoreChanges(String),
+
+    #[error("already at the first commit")]
+    FirstCommit,
+
+    #[error("already at the last commit")]
+    LastCommit,
 }
