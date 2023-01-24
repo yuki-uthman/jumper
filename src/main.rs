@@ -216,7 +216,10 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// to the next commit or if path is given then to the next commit that changed the file
     Next { path: Option<String> },
+
+    /// to the prev commit or if path is given then to the prev commit that changed the file
     Prev { path: Option<String> },
 }
 
