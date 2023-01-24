@@ -210,8 +210,6 @@ struct Cli {
     #[arg(short, long, default_value = "master")]
     branch: Option<String>,
 
-    path: Option<String>,
-
     #[command(subcommand)]
     command: Commands,
 }
