@@ -14,11 +14,11 @@ pub struct Git {
 }
 
 impl Git {
-    pub fn new(branch: String) -> Self {
-        let head = get_head();
-        let log = get_log(&branch).expect("failed to get the current branch name");
+    pub fn new(branch: String) -> Result<Self, Error> {
+        let head = get_head()?;
+        let log = get_log(&branch)?;
 
-        Self { branch, head, log }
+        Ok(Self { branch, head, log })
     }
 
     pub fn change_log(&self, file: &str) -> Vec<String> {
@@ -49,9 +49,7 @@ impl Git {
             log.reverse();
         }
 
-        let head = get_head();
-
-        let index = log.iter().position(|r| r == &head).unwrap();
+        let index = log.iter().position(|r| r == &self.head).unwrap();
         if index == log.len() - 1 {
             if direction == Direction::Backward {
                 return Err(Error::FirstCommit);
@@ -71,15 +69,58 @@ impl Git {
         println!("{}", stderr);
         Ok(())
     }
+
+    pub fn jump_to_change(&self, direction: Direction, file: &str) -> Result<(), Error> {
+        let mut master_log = self.log.clone();
+        if direction == Direction::Backward {
+            master_log.reverse();
+        }
+        let head = self.head.clone();
+        let index = master_log.iter().position(|r| r == &head).unwrap();
+
+        let change_log = self.change_log(file);
+
+        // find the next commit that changed the file
+        let next_commit = master_log.iter().skip(index + 1).find(|master_commit| {
+            // skip if the commit is not in the change log
+            if !change_log.contains(master_commit) {
+                false
+            } else {
+                let found = change_log
+                    .iter()
+                    .find(|change_commit| change_commit == master_commit);
+                match found {
+                    Some(_) => true,
+                    None => false,
+                }
+            }
+        });
+
+        // checkout next commit
+        match next_commit {
+            Some(commit) => {
+                let output = Command::new("git")
+                    .arg("checkout")
+                    .arg(commit)
+                    .output()
+                    .expect("failed to checkout the next commit");
+
+                let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
+                println!("{}", stderr);
+                Ok(())
+            }
+            None => Err(Error::NoMoreChanges(file.to_string())),
+        }
+    }
 }
 
-fn get_head() -> String {
+fn get_head() -> Result<String, Error> {
     let output = Command::new("git")
         .arg("rev-parse")
         .arg("HEAD")
         .output()
         .expect("failed to get the current branch name");
-    String::from_utf8(output.stdout).unwrap().trim().to_string()
+    Ok(String::from_utf8(output.stdout).unwrap().trim().to_string())
 }
 
 fn get_log(branch: &str) -> Result<Vec<String>, Error> {
