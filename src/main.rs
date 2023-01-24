@@ -32,10 +32,10 @@ fn get_log(branch: &str) -> Result<Vec<String>, Error> {
     Ok(log)
 }
 
-fn get_change_log(file: &str) -> Vec<String> {
+fn get_change_log(branch: &str, file: &str) -> Vec<String> {
     let output = Command::new("git")
         .arg("log")
-        .arg("master")
+        .arg(branch)
         .arg("--reverse")
         .arg("--pretty=format:%H")
         .arg("--follow")
@@ -119,7 +119,7 @@ fn jump_to_prev_change(branch: &str, file: &str) {
     let head = get_head();
     let index = master_log.iter().position(|r| r == &head).unwrap();
 
-    let change_log = get_change_log(file);
+    let change_log = get_change_log(branch, file);
     // println!("Change log: \n{:#?}", change_log);
 
     // find the next commit that changed the file
@@ -165,7 +165,7 @@ fn jump_to_next_change(branch: &str, file: &str) {
     let index = master_log.iter().position(|r| r == &head).unwrap();
 
     // git log for file
-    let change_log = get_change_log(file);
+    let change_log = get_change_log(branch, file);
     // println!("Change log: \n{:#?}", change_log);
 
     // find the next commit that changed the file
