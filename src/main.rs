@@ -15,7 +15,7 @@ fn get_log(branch: &str) -> Result<Vec<String>, Error> {
         .expect("failed to get the current branch name");
 
     if !output.status.success() {
-        return Err(Error::GitLogEmpty);
+        return Err(Error::GitLogEmpty(branch.to_string()));
     }
 
     let log = std::str::from_utf8(&output.stdout)
