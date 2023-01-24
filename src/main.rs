@@ -1,7 +1,11 @@
 use clap::{Parser, Subcommand};
 use std::process::Command;
 
-fn get_log(branch: &str) -> Vec<String> {
+mod error;
+
+use error::Error;
+
+fn get_log(branch: &str) -> Result<Vec<String>, Error> {
     let output = Command::new("git")
         .arg("log")
         .arg("--reverse")
@@ -9,6 +13,10 @@ fn get_log(branch: &str) -> Vec<String> {
         .arg(branch)
         .output()
         .expect("failed to get the current branch name");
+
+    if !output.status.success() {
+        return Err(Error::GitLogEmpty);
+    }
 
     let log = std::str::from_utf8(&output.stdout)
         .expect("failed to convert commits output to strings")
@@ -21,7 +29,7 @@ fn get_log(branch: &str) -> Vec<String> {
         panic!("Woops, no commits found for the branch: {}", branch);
     }
 
-    log
+    Ok(log)
 }
 
 fn get_change_log(file: &str) -> Vec<String> {
@@ -56,7 +64,7 @@ fn get_head() -> String {
 }
 
 fn jump_to_previous_commit(branch: &str) {
-    let log = get_log(branch);
+    let log = get_log(branch).unwrap();
     let head = get_head();
 
     let index = log.iter().position(|r| r == &head).unwrap();
@@ -77,13 +85,13 @@ fn jump_to_previous_commit(branch: &str) {
     println!("{}", stderr);
 }
 
-fn jump_to_next_commit(branch: &str) {
-    let log = get_log(branch);
+fn jump_to_next_commit(branch: &str) -> Result<(), Error> {
+    let log = get_log(branch)?;
     let head = get_head();
 
     if is_last_commit(&log, &head) {
         println!("Already at the last commit");
-        return;
+        return Ok(());
     }
 
     let index = log.iter().position(|r| r == &head).unwrap();
@@ -96,6 +104,7 @@ fn jump_to_next_commit(branch: &str) {
 
     let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
     println!("{}", stderr);
+    Ok(())
 }
 
 fn is_last_commit(log: &Vec<String>, head: &String) -> bool {
@@ -104,7 +113,7 @@ fn is_last_commit(log: &Vec<String>, head: &String) -> bool {
 }
 
 fn jump_to_prev_change(branch: &str, file: &str) {
-    let mut master_log = get_log(branch);
+    let mut master_log = get_log(branch).unwrap();
     master_log.reverse();
 
     let head = get_head();
@@ -149,7 +158,7 @@ fn jump_to_prev_change(branch: &str, file: &str) {
 
 fn jump_to_next_change(branch: &str, file: &str) {
     // index of the current commit
-    let master_log = get_log(branch);
+    let master_log = get_log(branch).unwrap();
     // println!("Master log: \n{:#?}", master_log);
 
     let head = get_head();
@@ -224,7 +233,12 @@ fn main() {
                 jump_to_next_change(&branch, path);
             }
             None => {
-                jump_to_next_commit(&branch);
+                match jump_to_next_commit(&branch) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("{}", e);
+                    }
+                }
             }
         },
         Commands::Prev { path } => match path {
