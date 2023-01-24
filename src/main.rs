@@ -1,12 +1,12 @@
 use clap::{Parser, Subcommand};
 use std::process::Command;
 
-fn get_master_log() -> Vec<String> {
+fn get_log(branch: &str) -> Vec<String> {
     let output = Command::new("git")
         .arg("log")
         .arg("--reverse")
         .arg("--pretty=format:%H")
-        .arg("master")
+        .arg(branch)
         .output()
         .expect("failed to get the current branch name");
 
@@ -16,6 +16,10 @@ fn get_master_log() -> Vec<String> {
         .split("\n")
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
+
+    if log.first().unwrap() == "" {
+        panic!("Woops, no commits found for the branch: {}", branch);
+    }
 
     log
 }
@@ -51,8 +55,8 @@ fn get_head() -> String {
     String::from_utf8(output.stdout).unwrap().trim().to_string()
 }
 
-fn jump_to_previous_commit() {
-    let log = get_master_log();
+fn jump_to_previous_commit(branch: &str) {
+    let log = get_log(branch);
     let head = get_head();
 
     let index = log.iter().position(|r| r == &head).unwrap();
@@ -73,8 +77,8 @@ fn jump_to_previous_commit() {
     println!("{}", stderr);
 }
 
-fn jump_to_next_commit() {
-    let log = get_master_log();
+fn jump_to_next_commit(branch: &str) {
+    let log = get_log(branch);
     let head = get_head();
 
     if is_last_commit(&log, &head) {
@@ -99,8 +103,8 @@ fn is_last_commit(log: &Vec<String>, head: &String) -> bool {
     index == log.len() - 1
 }
 
-fn jump_to_prev_change(file: &str) {
-    let mut master_log = get_master_log();
+fn jump_to_prev_change(branch: &str, file: &str) {
+    let mut master_log = get_log(branch);
     master_log.reverse();
 
     let head = get_head();
@@ -143,9 +147,9 @@ fn jump_to_prev_change(file: &str) {
 }
 
 
-fn jump_to_next_change(file: &str) {
+fn jump_to_next_change(branch: &str, file: &str) {
     // index of the current commit
-    let master_log = get_master_log();
+    let master_log = get_log(branch);
     // println!("Master log: \n{:#?}", master_log);
 
     let head = get_head();
@@ -194,6 +198,9 @@ fn jump_to_next_change(file: &str) {
 
 #[derive(Parser)]
 struct Cli {
+    #[arg(short, long, default_value = "master")]
+    branch: Option<String>,
+
     path: Option<String>,
 
     #[command(subcommand)]
@@ -209,21 +216,23 @@ enum Commands {
 fn main() {
     let cli = Cli::parse();
 
+    let branch = cli.branch.unwrap();
+
     match &cli.command {
         Commands::Next { path } => match path {
             Some(path) => {
-                jump_to_next_change(path);
+                jump_to_next_change(&branch, path);
             }
             None => {
-                jump_to_next_commit();
+                jump_to_next_commit(&branch);
             }
         },
         Commands::Prev { path } => match path {
             Some(path) => {
-                jump_to_prev_change(path);
+                jump_to_prev_change(&branch, path);
             }
             None => {
-                jump_to_previous_commit();
+                jump_to_previous_commit(&branch);
             }
         },
     }
