@@ -44,7 +44,7 @@ impl Git {
     }
 
     pub fn jump_to_commit(&self, direction: Direction) -> Result<(), Error> {
-        let mut log = get_log(&self.branch)?;
+        let mut log = self.log.clone();
         if direction == Direction::Backward {
             log.reverse();
         }
