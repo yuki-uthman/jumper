@@ -71,24 +71,24 @@ impl Git {
     }
 
     pub fn jump_to_change(&self, direction: Direction, file: &str) -> Result<(), Error> {
-        let mut master_log = self.log.clone();
+        let mut log = self.log.clone();
         if direction == Direction::Backward {
-            master_log.reverse();
+            log.reverse();
         }
         let head = self.head.clone();
-        let index = master_log.iter().position(|r| r == &head).unwrap();
+        let index = log.iter().position(|r| r == &head).unwrap();
 
         let change_log = self.change_log(file);
 
         // find the next commit that changed the file
-        let next_commit = master_log.iter().skip(index + 1).find(|master_commit| {
+        let next_commit = log.iter().skip(index + 1).find(|commit| {
             // skip if the commit is not in the change log
-            if !change_log.contains(master_commit) {
+            if !change_log.contains(commit) {
                 false
             } else {
                 let found = change_log
                     .iter()
-                    .find(|change_commit| change_commit == master_commit);
+                    .find(|change_commit| commit == change_commit);
                 match found {
                     Some(_) => true,
                     None => false,
