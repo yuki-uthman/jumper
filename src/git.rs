@@ -151,9 +151,5 @@ fn get_log(branch: &str) -> Result<Vec<String>, Error> {
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
 
-    if log.first().unwrap() == "" {
-        panic!("Woops, no commits found for the branch: {}", branch);
-    }
-
     Ok(log)
 }
