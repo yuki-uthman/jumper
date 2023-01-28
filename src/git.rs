@@ -119,8 +119,16 @@ fn get_head() -> Result<String, Error> {
         .arg("rev-parse")
         .arg("HEAD")
         .output()
-        .expect("failed to get the current branch name");
-    Ok(String::from_utf8(output.stdout).unwrap().trim().to_string())
+        .expect("failed to get the current commit hash");
+
+    if output.status.success() {
+        let head = String::from_utf8(output.stdout).unwrap().trim().to_string();
+        Ok(head)
+    } else {
+        Err(Error::GitError {
+            message: String::from_utf8(output.stderr).unwrap().trim().to_string(),
+        })
+    }
 }
 
 fn get_log(branch: &str) -> Result<Vec<String>, Error> {
