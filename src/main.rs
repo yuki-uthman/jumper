@@ -1,3 +1,4 @@
+use std::process::ExitCode;
 use clap::{Parser, Subcommand};
 
 mod error;
@@ -23,14 +24,14 @@ enum Commands {
     Prev { path: Option<String> },
 }
 
-fn main() {
+fn main() -> ExitCode {
     let cli = Cli::parse();
 
     let git = match Git::new(cli.branch.unwrap()) {
         Ok(git) => git,
         Err(e) => {
-            println!("{}", e);
-            std::process::exit(1);
+            eprintln!("{}", e);
+            return ExitCode::FAILURE;
         }
     };
 
@@ -38,29 +39,33 @@ fn main() {
     match &cli.command {
         Commands::Next { path } => match path {
             Some(path) => match git.jump_to_change(Direction::Forward, path) {
-                Ok(_) => {}
+                Ok(_) => { ExitCode::SUCCESS  },
                 Err(e) => {
-                    println!("{}", e);
+                    eprintln!("{}", e);
+                    ExitCode::FAILURE
                 }
             },
             None => match git.jump_to_commit(Direction::Forward) {
-                Ok(_) => {}
+                Ok(_) => { ExitCode::SUCCESS  },
                 Err(e) => {
-                    println!("{}", e);
+                    eprintln!("{}", e);
+                    ExitCode::FAILURE
                 }
             },
         },
         Commands::Prev { path } => match path {
             Some(path) => match git.jump_to_change(Direction::Backward, path) {
-                Ok(_) => {}
+                Ok(_) => { ExitCode::SUCCESS  },
                 Err(e) => {
-                    println!("{}", e);
+                    eprintln!("{}", e);
+                    ExitCode::FAILURE
                 }
             },
             None => match git.jump_to_commit(Direction::Backward) {
-                Ok(_) => {}
+                Ok(_) => { ExitCode::SUCCESS  },
                 Err(e) => {
-                    println!("{}", e);
+                    eprintln!("{}", e);
+                    ExitCode::FAILURE
                 }
             },
         },

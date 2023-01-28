@@ -5,7 +5,7 @@ pub enum Error {
     #[error("{}", message)]
     GitError { message: String },
 
-    #[error("the result of \"git log {0}\" is empty. maybe wrong branch name?")]
+    #[error("no other commit found in \"{0}\". try another branch? (eg. jumper --branch main next)")]
     GitLogEmpty(String),
 
     #[error("no more changes found for the file: {0}")]
