@@ -109,7 +109,9 @@ impl Git {
                 println!("{}", stderr);
                 Ok(())
             }
-            None => Err(Error::NoMoreChanges(file.to_string())),
+            None => Err(Error::NoMoreChanges {
+                file: file.to_string(),
+            }),
         }
     }
 }
@@ -141,7 +143,9 @@ fn get_log(branch: &str) -> Result<Vec<String>, Error> {
         .expect("failed to get the current branch name");
 
     if !output.status.success() {
-        return Err(Error::GitLogEmpty(branch.to_string()));
+        return Err(Error::GitLogEmpty {
+            branch: branch.to_string(),
+        });
     }
 
     let log = std::str::from_utf8(&output.stdout)
