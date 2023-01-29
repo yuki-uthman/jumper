@@ -8,7 +8,7 @@ use git::{Direction, Git};
 
 #[derive(Parser)]
 struct Cli {
-    #[arg(short, long, default_value = "master")]
+    #[arg(global = true, short, long, default_value = "master")]
     branch: Option<String>,
 
     #[command(subcommand)]

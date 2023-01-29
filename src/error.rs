@@ -6,7 +6,7 @@ pub enum Error {
     GitError { message: String },
 
     #[error(
-        "no other commit found in \"{}\". try another branch? (eg. jumper --branch main next)",
+        "no other commit found in \"{}\". try another branch? (eg. jumper next --branch main)",
         branch
     )]
     GitLogEmpty { branch: String },
