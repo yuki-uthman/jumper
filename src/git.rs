@@ -21,26 +21,30 @@ impl Git {
         Ok(Self { branch, head, log })
     }
 
-    pub fn change_log(&self, file: &str) -> Vec<String> {
+    pub fn jump_to_fist(&self) -> Result<(), Error> {
+        let commit = self.log.first().unwrap();
         let output = Command::new("git")
-            .arg("log")
-            .arg(&self.branch.as_str())
-            .arg("--reverse")
-            .arg("--pretty=format:%H")
-            .arg("--follow")
-            .arg("--")
-            .arg(file)
+            .arg("checkout")
+            .arg(commit)
             .output()
-            .expect("failed to get the current branch name");
+            .expect("failed to get checkout the commit");
 
-        let log = std::str::from_utf8(&output.stdout)
-            .expect("failed to convert commits output to strings")
-            .trim()
-            .split("\n")
-            .map(|s| s.to_string())
-            .collect::<Vec<String>>();
+        let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
+        println!("{}", stderr);
+        Ok(())
+    }
 
-        log
+    pub fn jump_to_last(&self) -> Result<(), Error> {
+        let commit = self.log.last().unwrap();
+        let output = Command::new("git")
+            .arg("checkout")
+            .arg(commit)
+            .output()
+            .expect("failed to get checkout the commit");
+
+        let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
+        println!("{}", stderr);
+        Ok(())
     }
 
     pub fn jump_to_commit(&self, direction: Direction) -> Result<(), Error> {
@@ -115,31 +119,28 @@ impl Git {
         }
     }
 
-    pub fn jump_to_fist(&self) -> Result<(), Error> {
-        let commit = self.log.first().unwrap();
+    fn change_log(&self, file: &str) -> Vec<String> {
         let output = Command::new("git")
-            .arg("checkout")
-            .arg(commit)
+            .arg("log")
+            .arg(&self.branch.as_str())
+            .arg("--reverse")
+            .arg("--pretty=format:%H")
+            .arg("--follow")
+            .arg("--")
+            .arg(file)
             .output()
-            .expect("failed to get checkout the commit");
+            .expect("failed to get the current branch name");
 
-        let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
-        println!("{}", stderr);
-        Ok(())
+        let log = std::str::from_utf8(&output.stdout)
+            .expect("failed to convert commits output to strings")
+            .trim()
+            .split("\n")
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+
+        log
     }
 
-    pub fn jump_to_last(&self) -> Result<(), Error> {
-        let commit = self.log.last().unwrap();
-        let output = Command::new("git")
-            .arg("checkout")
-            .arg(commit)
-            .output()
-            .expect("failed to get checkout the commit");
-
-        let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
-        println!("{}", stderr);
-        Ok(())
-    }
 }
 
 fn get_head() -> Result<String, Error> {
