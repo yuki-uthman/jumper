@@ -114,6 +114,32 @@ impl Git {
             }),
         }
     }
+
+    pub fn jump_to_fist(&self) -> Result<(), Error> {
+        let commit = self.log.first().unwrap();
+        let output = Command::new("git")
+            .arg("checkout")
+            .arg(commit)
+            .output()
+            .expect("failed to get checkout the commit");
+
+        let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
+        println!("{}", stderr);
+        Ok(())
+    }
+
+    pub fn jump_to_last(&self) -> Result<(), Error> {
+        let commit = self.log.last().unwrap();
+        let output = Command::new("git")
+            .arg("checkout")
+            .arg(commit)
+            .output()
+            .expect("failed to get checkout the commit");
+
+        let stderr = String::from_utf8(output.stderr).unwrap().trim().to_string();
+        println!("{}", stderr);
+        Ok(())
+    }
 }
 
 fn get_head() -> Result<String, Error> {

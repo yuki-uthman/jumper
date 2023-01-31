@@ -22,6 +22,9 @@ enum Commands {
 
     /// to the prev commit or if path is given then to the prev commit that changed the file
     Prev { path: Option<String> },
+
+    First,
+    Last,
 }
 
 fn main() -> ExitCode {
@@ -37,6 +40,24 @@ fn main() -> ExitCode {
 
 
     match &cli.command {
+        Commands::First => {
+            match git.jump_to_fist() {
+                Ok(_) => ExitCode::SUCCESS,
+                Err(e) => {
+                    eprintln!("{}", e);
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        Commands::Last => {
+            match git.jump_to_last() {
+                Ok(_) => ExitCode::SUCCESS,
+                Err(e) => {
+                    eprintln!("{}", e);
+                    ExitCode::FAILURE
+                }
+            }
+        }
         Commands::Next { path } => match path {
             Some(path) => match git.jump_to_change(Direction::Forward, path) {
                 Ok(_) => { ExitCode::SUCCESS  },
